@@ -85,3 +85,10 @@ def test_set_overwrites_expiration(store_and_clock):
     clock.advance(6)
     assert store.get("foo") == "new_value"
     assert store.ttl("foo") == -1
+def test_ttl_after_expiration(store_and_clock):
+    store, clock = store_and_clock
+    store.set("foo", "bar")
+    store.expire("foo", 5)
+    
+    clock.advance(6)  # Fast-forward time past threshold without sleep!
+    assert store.ttl("foo") == -2  # Key should be considered expired and removed

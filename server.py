@@ -52,8 +52,8 @@ class RedisServer:
     async def start(self):
         server = await asyncio.start_server(
             self.handle_client,
-            HOST,
-            PORT,
+            '127.0.0.1',    
+            6379,   
         )
 
         addresses = ", ".join(

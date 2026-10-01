@@ -63,3 +63,10 @@ class Store:
             return -1
         remaining = self._expires[key] - self._clock()
         return max(0, int(round(remaining)))
+    def DBSIZE(self) -> int:
+        """Returns the number of keys in the store."""
+        return len(self._data)
+    def PING(self) -> str:
+        """Returns a simple PONG response."""
+        return "PONG"
+    
