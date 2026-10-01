@@ -1,188 +1,67 @@
 import asyncio
 
-import time
-
-data = {}
-expiry = {}
-
-def check_expired(key):
-    """Remove key if its expiration time has passed."""
-
-    if key in expiry:
-        if time.time() >= expiry[key]:
-            data.pop(key, None)
-            expiry.pop(key, None)
-            return True
-
-    return False
 
 
-async def handle_client(reader, writer):
-
-    print("Client connected")
-
-    while True:
-
-        message = await reader.readline()
-
-        if not message:
-            break
-
-        command = message.decode().strip().split()
-
-        if not command:
-            continue
-
-        cmd = command[0].upper()
-
-        # ---------------- SET ----------------
-        if cmd == "SET":
-
-            if len(command) != 3:
-                response = "ERROR: SET key value\n"
-
-            else:
-                key = command[1]
-                value = command[2]
-
-                data[key] = value
-
-                # SET removes previous expiration
-                expiry.pop(key, None)
-
-                response = "OK\n"
-
-        # ---------------- GET ----------------
-        elif cmd == "GET":
-
-            if len(command) != 2:
-                response = "ERROR: GET key\n"
-
-            else:
-                key = command[1]
-
-                check_expired(key)
-
-                if key in data:
-                    response = data[key] + "\n"
-                else:
-                    response = "nil\n"
-
-        # ---------------- EXISTS ----------------
-        elif cmd == "EXISTS":
-
-            if len(command) != 2:
-                response = "ERROR: EXISTS key\n"
-
-            else:
-                key = command[1]
-
-                check_expired(key)
-
-                if key in data:
-                    response = "1\n"
-                else:
-                    response = "0\n"
-
-        # ---------------- DEL ----------------
-        elif cmd == "DEL":
-
-            if len(command) != 2:
-                response = "ERROR: DEL key\n"
-
-            else:
-                key = command[1]
-
-                check_expired(key)
-
-                if key in data:
-                    del data[key]
-                    expiry.pop(key, None)
-                    response = "1\n"
-                else:
-                    response = "0\n"
-
-        # ---------------- EXPIRE ----------------
-        elif cmd == "EXPIRE":
-
-            if len(command) != 3:
-                response = "ERROR: EXPIRE key seconds\n"
-
-            else:
-                key = command[1]
-
-                try:
-                    seconds = int(command[2])
-                except ValueError:
-                    response = "ERROR: seconds must be integer\n"
-
-                else:
-                    check_expired(key)
-
-                    if key not in data:
-                        response = "0\n"
-                    else:
-                        expiry[key] = time.time() + seconds
-                        response = "1\n"
-
-        # ---------------- TTL ----------------
-        elif cmd == "TTL":
-
-            if len(command) != 2:
-                response = "ERROR: TTL key\n"
-
-            else:
-                key = command[1]
-
-                check_expired(key)
-
-                if key not in data:
-                    response = "-2\n"
-
-                elif key not in expiry:
-                    response = "-1\n"
-
-                else:
-                    remaining = int(expiry[key] - time.time())
-
-                    if remaining < 0:
-                        data.pop(key, None)
-                        expiry.pop(key, None)
-                        response = "-2\n"
-                    else:
-                        response = str(remaining) + "\n"
-        elif cmd == "PING":
-            response = "PONG\n"
-
-        # ---------------- UNKNOWN ----------------
-        else:
-            response = "ERROR: unknown command\n"
-
-        writer.write(response.encode())
-        await writer.drain()
-
-    writer.close()
-    await writer.wait_closed()
-
-    print("Client disconnected")
+class RedisServer:
+    """Async TCP server for Mini Redis."""
 
 
-async def main():
+    async def handle_client(
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+    ):
+        address = writer.get_extra_info("peername")
 
-    server = await asyncio.start_server(
-        handle_client,
-        "127.0.0.1",
-        8888
-    )
+        print(f"Client connected: {address}")
 
-    print("Redis server started on 127.0.0.1:8888")
+        try:
+            while True:
+                data = await reader.read(BUFFER_SIZE)
 
-    async with server:
-        await server.serve_forever()
+                if not data:
+                    break
 
+                request = data.decode()
 
-asyncio.run(main())
+                # Support multiple commands separated by lines.
+                for line in request.splitlines():
 
+                    if not line.strip():
+                        continue
 
+                    command = parse_command(line)
 
+                    response = self.command_handler.execute(command)
 
+                    encoded = encode_response(response)
+
+                    writer.write(encoded.encode())
+
+                    await writer.drain()
+
+        except ConnectionResetError:
+            print(f"Client disconnected: {address}")
+
+        finally:
+            writer.close()
+            await writer.wait_closed()
+
+            print(f"Connection closed: {address}")
+
+    async def start(self):
+        server = await asyncio.start_server(
+            self.handle_client,
+            HOST,
+            PORT,
+        )
+
+        addresses = ", ".join(
+            str(sock.getsockname())
+            for sock in server.sockets
+        )
+
+        print(f"Mini Redis server started on {addresses}")
+
+        async with server:
+            await server.serve_forever()
