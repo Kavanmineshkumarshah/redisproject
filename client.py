@@ -2,7 +2,7 @@ import socket
 import asyncio
 
 HOST = "127.0.0.1"
-PORT = 6379
+PORT = 6380
 
 async def redis_client():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
