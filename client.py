@@ -41,3 +41,5 @@ if __name__ == "__main__":
         print("\nClient exited.")
    except Exception as e:
         print(f"\nAn error occurred: {e}")
+   finally:
+        print("Client closed.")

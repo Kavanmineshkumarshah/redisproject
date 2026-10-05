@@ -1,3 +1,9 @@
+from ast import arg
+import cmd
+from logging import Handler
+from turtle import st
+
+from redisproject import store
 from store import Store
 
 
@@ -5,11 +11,11 @@ from store import Store
 class CommandHandler:
     """Handle Redis-like commands."""
 
-    def __init__(self, store: Store):
+"""    def __init__(self, store: Store):
         self.store = store
 
     def execute(self, command: list[str]):
-        """Execute a command."""
+        """ """
 
         if not command:
             return "-ERR empty command"
@@ -97,4 +103,85 @@ class CommandHandler:
 
         key = command[1]
 
-        return self.store.ttl(key)
+        return self.store.ttl(key)"""
+def cmd_ping(store: Store, args: list[str]):
+    return args[0] if args else "PONG"
+def cmd_get(store: Store, args: list[str]):
+    if len(args) != 1:
+        return "-ERR wrong number of arguments for GET"
+    return store.get(args[0])
+def cmd_set(store: Store, args: list[str]):
+    if len(args) != 2:
+        return "-ERR wrong number of arguments for SET"
+    return store.set(args[0], args[1])
+def cmd_exists(store: Store, args: list[str]):
+    if len(args) < 1:
+        return "-ERR wrong number of arguments for EXISTS"
+    return sum(store.exists(key) for key in args)
+def cmd_delete(store: Store, args: list[str]):
+    if len(args) < 1:
+        return "-ERR wrong number of arguments for DELETE"
+    return sum(store.delete(key) for key in args)
+def cmd_expire(store: Store, args: list[str]):
+    if len(args) != 2:
+        return "-ERR wrong number of arguments for EXPIRE"
+    key = args[0]
+    try:
+        seconds = int(args[1])
+    except ValueError:
+        return "-ERR value is not an integer or out of range"
+    return store.expire(key, seconds)
+def cmd_ttl(store: Store, args: list[str]):
+    if len(args) != 1:
+        return "-ERR wrong number of arguments for TTL"
+    return store.ttl(args[0])
+def cmd_dbsize(store: Store, args: list[str]):
+    if len(args) != 0:
+        return "-ERR wrong number of arguments for DBSIZE"
+    return store.DBSIZE()
+
+
+COMMANDS = {
+    "PING": (cmd_ping, (0, 1)),
+    "GET": (cmd_get, 1),
+    "SET": (cmd_set, 2),
+    "EXISTS": (cmd_exists, (1, None)),
+    "DEL": (cmd_delete, (1, None)),
+    "DELETE": (cmd_delete, (1, None)),
+    "EXPIRE": (cmd_expire, 2),
+    "TTL": (cmd_ttl, 1),
+    "DBSIZE": (cmd_dbsize, 0),
+}
+
+
+class CommandHandler:
+    """Dispatch Redis-like commands through the command registry."""
+
+    def __init__(self, store: Store):
+        self.store = store
+
+    def execute(self, command: list[str]):
+        if not command:
+            return "-ERR empty command"
+
+        name = command[0].upper()
+        if name not in COMMANDS:
+            return f"-ERR unknown command '{name}'"
+
+        handler, arity = COMMANDS[name]
+        args = command[1:]
+        if isinstance(arity, tuple):
+            minimum, maximum = arity
+            valid_arity = len(args) >= minimum and (
+                maximum is None or len(args) <= maximum
+            )
+        else:
+            valid_arity = len(args) == arity
+
+        if not valid_arity:
+            return f"-ERR wrong number of arguments for '{name.lower()}' command"
+
+        try:
+            return handler(self.store, args)
+        except ValueError:
+            return "-ERR value is not an integer or out of range"
