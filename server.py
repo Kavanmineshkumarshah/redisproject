@@ -202,7 +202,7 @@ async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
 async def main():
     host = "127.0.0.1"
-    port = 6379
+    port = 6380
     
     # Task 1: Initialize the async TCP Server Loop
     server = await asyncio.start_server(handle_client, host, port)
