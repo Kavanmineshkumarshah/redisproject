@@ -25,9 +25,6 @@ class RedisLite:
             return False
         return True
 
-    # ==========================================
-    # 1. HASHES (HSET, HGET, HGETALL)
-    # ==========================================
     def hset(self, key, pairs):
         if not self._check_type(key, 'hash'):
             return "ERR WRONGTYPE Operation against a key holding the wrong kind of value"
@@ -66,9 +63,6 @@ class RedisLite:
             result.append(v)
         return result
 
-    # ==========================================
-    # 2. SETS (SADD, SMEMBERS, SINTER)
-    # ==========================================
     def sadd(self, key, members):
         if not self._check_type(key, 'set'):
             return "ERR WRONGTYPE Operation against a key holding the wrong kind of value"
@@ -116,9 +110,6 @@ class RedisLite:
                 
         return sorted(list(intersect))
 
-    # ==========================================
-    # 3. SORTED SETS (ZADD, ZRANGE)
-    # ==========================================
     def zadd(self, key, pairs):
         if not self._check_type(key, 'zset'):
             return "ERR WRONGTYPE Operation against a key holding the wrong kind of value"
