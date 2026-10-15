@@ -9,6 +9,7 @@ class RedisLite:
         self.aof_path = aof_path
         self._clear_aof()
 
+
     def _clear_aof(self):
         """Initializes or clears the AOF file for a clean run."""
         with open(self.aof_path, "w") as f:
@@ -25,9 +26,6 @@ class RedisLite:
             return False
         return True
 
-    # ==========================================
-    # 1. HASHES (HSET, HGET, HGETALL)
-    # ==========================================
     def hset(self, key, pairs):
         if not self._check_type(key, 'hash'):
             return "ERR WRONGTYPE Operation against a key holding the wrong kind of value"
@@ -52,7 +50,7 @@ class RedisLite:
             return "ERR WRONGTYPE Operation against a key holding the wrong kind of value"
         if key not in self.db or field not in self.db[key]:
             return "(nil)"
-        return self.db[key][field]
+        return self.db[key][field]                                                                                                                                                                                                                          
 
     def hgetall(self, key):
         if not self._check_type(key, 'hash'):
@@ -66,9 +64,6 @@ class RedisLite:
             result.append(v)
         return result
 
-    # ==========================================
-    # 2. SETS (SADD, SMEMBERS, SINTER)
-    # ==========================================
     def sadd(self, key, members):
         if not self._check_type(key, 'set'):
             return "ERR WRONGTYPE Operation against a key holding the wrong kind of value"
@@ -116,9 +111,6 @@ class RedisLite:
                 
         return sorted(list(intersect))
 
-    # ==========================================
-    # 3. SORTED SETS (ZADD, ZRANGE)
-    # ==========================================
     def zadd(self, key, pairs):
         if not self._check_type(key, 'zset'):
             return "ERR WRONGTYPE Operation against a key holding the wrong kind of value"

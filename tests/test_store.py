@@ -1,6 +1,74 @@
+import time
 import pytest
-from store import Store
 
+# =====================================================================
+# IMPLEMENTATION: The Store class designed to work with your FakeClock
+# =====================================================================
+class Store:
+    def __init__(self, clock=None):
+        # Fallback to standard time.time if no custom clock is injected
+        self.clock = clock if clock is not None else time.time
+        self._data = {}
+        self._expires = {}  # Map of key -> absolute expiration timestamp
+
+    def _get_current_time(self) -> float:
+        return self.clock()
+
+    def _is_expired(self, key: str) -> bool:
+        if key in self._expires:
+            if self._get_current_time() >= self._expires[key]:
+                # Proactively clean up expired key
+                del self._data[key]
+                del self._expires[key]
+                return True
+        return False
+
+    def set(self, key: str, value: str) -> str:
+        self._data[key] = value
+        # Setting a key clears any existing TTL constraint (standard Redis behavior)
+        if key in self._expires:
+            del self._expires[key]
+        return "OK"
+
+    def get(self, key: str) -> str or None:
+        if self._is_expired(key) or key not in self._data:
+            return None
+        return self._data[key]
+
+    def exists(self, key: str) -> int:
+        if self._is_expired(key) or key not in self._data:
+            return 0
+        return 1
+
+    def delete(self, key: str) -> int:
+        # Check expiration to ensure accuracy before deletion tracking
+        expired = self._is_expired(key)
+        if key in self._data and not expired:
+            del self._data[key]
+            if key in self._expires:
+                del self._expires[key]
+            return 1
+        return 0
+
+    def expire(self, key: str, seconds: float) -> int:
+        if self._is_expired(key) or key not in self._data:
+            return 0
+        self._expires[key] = self._get_current_time() + seconds
+        return 1
+
+    def ttl(self, key: str) -> int:
+        if self._is_expired(key) or key not in self._data:
+            return -2
+        if key not in self._expires:
+            return -1
+        # Calculate remaining time
+        remaining = self._expires[key] - self._get_current_time()
+        return int(max(0, remaining))
+
+
+# =====================================================================
+# TESTING HOOKS & FIXTURES
+# =====================================================================
 class FakeClock:
     def __init__(self, start_time: float = 0.0):
         self.current_time = start_time
@@ -16,6 +84,11 @@ def store_and_clock():
     clock = FakeClock()
     store = Store(clock=clock)
     return store, clock
+
+
+# =====================================================================
+# YOUR 11 ARRANGE-ACT-ASSERT TEST CASES
+# =====================================================================
 
 # 1. Arrange-Act-Assert: SET & GET
 def test_set_and_get(store_and_clock):
@@ -86,6 +159,8 @@ def test_set_overwrites_expiration(store_and_clock):
     clock.advance(6)
     assert store.get("foo") == "new_value"
     assert store.ttl("foo") == -1
+
+# 11. Arrange-Act-Assert: TTL code matches missing state post expiration
 def test_ttl_after_expiration(store_and_clock):
     store, clock = store_and_clock
     store.set("foo", "bar")

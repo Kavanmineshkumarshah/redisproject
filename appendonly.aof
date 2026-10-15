@@ -1,1 +1,1 @@
-HSET user:1 name Alice age 30
+ZADD Leaderboard 100 "player1" 150 "player2"

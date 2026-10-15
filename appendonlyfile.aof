@@ -1,0 +1,7 @@
+{"op": "SET", "key": "name", "val": "nehal", "ttl": null}
+{"op": "SET", "key": "kavan", "val": "db", "ttl": null}
+{"op": "SET", "key": "jalebi", "val": "vinit", "ttl": null}
+{"op": "SET", "key": "a", "val": "10", "ttl": null}
+{"op": "SET", "key": "c", "val": "1000", "ttl": null}
+{"op": "SET", "key": "d", "val": "kidudi", "ttl": null}
+{"op": "SET", "key": "mykey", "val": "10000", "ttl": null}

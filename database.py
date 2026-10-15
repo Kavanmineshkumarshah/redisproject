@@ -38,7 +38,7 @@ class MicroRedis:
     def _evict_if_needed(self):
         while len(self.db) > self.maxmemory:
             evicted_key, _ = self.db.popitem(last=False)
-            print(f"⚠️ [Eviction Policy] Evicted key '{evicted_key}' due to maxmemory limit ({self.maxmemory}).")
+            print(f" [Eviction Policy] Evicted key '{evicted_key}' due to maxmemory limit ({self.maxmemory}).")
 
     def _get_valid_entry(self, key: str) -> Optional[ValueWrapper]:
         if key not in self.db:
@@ -220,6 +220,6 @@ class MicroRedis:
                             del self.db[key]
 
     def _handle_shutdown(self, signum, frame):
-        print(f"\n🛑 Safe shutdown triggered. Flushing AOF changes to disk...")
+        print(f"\n Safe shutdown triggered. Flushing AOF changes to disk...")
         self.aof.close()
         sys.exit(0)

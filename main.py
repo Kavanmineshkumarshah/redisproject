@@ -23,7 +23,7 @@ def start_interactive_cli():
     # Memory threshold configured to 5 for standard user CLI interactions
     store = MicroRedis(maxmemory=5, fsync="everysec")
     
-    print("Welcome to MicroRedis CLI implementation!")
+    print("Welcome to MiniRedis CLI implementation!")
     print("Available Commands:")
     print("  - Strings: SET <key> <val> [EX <seconds>], GET <key>")
     print("  - Deques:  LPUSH <key> <val>, RPUSH <key> <val>, LPOP <key>, RPOP <key>")
@@ -147,8 +147,7 @@ def main():
     args = parse_args()
     logging.basicConfig(
         level=getattr(logging, args.log_level),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",)
     store = Store()
     command_handler = CommandHandler(store)
     server = RedisServer(command_handler, host=args.host, port=args.port)
