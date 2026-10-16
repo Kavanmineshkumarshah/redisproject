@@ -1,8 +1,6 @@
 from datetime import datetime
 from time import sleep
 from freezegun import freeze_time
-
-# Approach A: As a Decorator
 @freeze_time("2026-10-01 12:00:00")
 def test_something():
     # Inside this function, the clock is frozen
@@ -34,3 +32,4 @@ if __name__ == "__main__":
     print("Running Approach B...")
     test_another_thing()
     print("Approach B passed successfully!")
+
