@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-from database import MicroRedis
+from mini_redis.database import MicroRedis
 
 def run_automated_diagnostics():
     """Runs a quick pre-flight integrity check on storage rules."""

@@ -96,7 +96,8 @@ class AOFManager:
                     commands.append(cmd_args)
             else:
                 idx += 1
-        return commandsimport os
+        return commands
+import os
 import time
 import threading
 from typing import List
