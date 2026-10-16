@@ -1,2 +1,0 @@
-{"op": "SET", "key": "nihal", "val": "12", "ttl": 60}
-{"op": "SET", "key": "kavan", "val": "12", "ttl": 15}
