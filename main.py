@@ -17,7 +17,6 @@ def run_automated_diagnostics():
     print(f"List Verification:\n{diag_store.lrange('test_list', 0, -1)}")
     diag_store.aof.close()
     print("============================================\n")
-
 def start_interactive_cli():
     """Launches an interactive prompt accepting customizable user inputs directly."""
     # Memory threshold configured to 5 for standard user CLI interactions
@@ -32,7 +31,7 @@ def start_interactive_cli():
 
     while True:
         try:
-            user_input = input("micro-redis> ").strip()
+            user_input = input("Miniredis> ").strip()
             if not user_input:
                 continue
                 
@@ -146,8 +145,8 @@ if __name__ == "__main__":
 def main():
     args = parse_args()
     logging.basicConfig(
-        level=getattr(logging, args.log_level),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",)
+    level=getattr(logging, args.log_level),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",)
     store = Store()
     command_handler = CommandHandler(store)
     server = RedisServer(command_handler, host=args.host, port=args.port)

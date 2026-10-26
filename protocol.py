@@ -13,7 +13,7 @@ def parse_command(data: str) -> list[str]:
     becomes:
         ["SET", "foo", "bar"]
     """
-
+    
     return data.strip().split()
 
 

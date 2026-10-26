@@ -4,18 +4,13 @@ import time
 
 class MiniRedis:
     def __init__(self, db_file="dump.json", aof_file="appendonlyfile.aof", save_rules=None):
-        self.db = {}               # Memory storage: {key: value}
-        self.expiries = {}         # Absolute expiry timestamps: {key: timestamp}
+        self.db = {}             
+        self.expiries = {}       
         self.db_file = db_file
         self.aof_file = aof_file
-        
-        # Configuration for auto-saves: list of tuples (seconds, changes_required)
-        # Defaults to saving if 5 writes happen within 10 seconds
-        self.save_rules = save_rules or [(10, 5)] 
-        self.dirty_count = 0       # Writes since last snapshot
+        self.save_rules = save_rules or [(10, 5)]
+        self.dirty_count = 0     
         self.last_save_time = time.time()
-        
-        # Initialize or recover the database
         self.startup()
 
     def current_aof_position(self):
@@ -24,29 +19,23 @@ class MiniRedis:
             return 0
         return os.path.getsize(self.aof_file)
 
-    # ==========================================
-    # CORE OPERATIONS & WRITE AHEAD LOGGING (AOF)
-    # ==========================================
     def set(self, key, value, ttl=None):
         self.db[key] = value
         if ttl:
             self.expiries[key] = time.time() + ttl
         elif key in self.expiries:
             del self.expiries[key]
-        
-        # Log to AOF immediately
+            
         command = {"op": "SET", "key": key, "val": value, "ttl": ttl}
         self._write_aof(command)
-        
-        # Increment mutation counter for snapshot tracking
         self.dirty_count += 1
         self._check_auto_save()
 
     def get(self, key):
-        # Handle lazy expiration cleanup
         if key in self.expiries and time.time() > self.expiries[key]:
             del self.db[key]
             del self.expiries[key]
+            
         return self.db.get(key, None)
 
     def _write_aof(self, command):
@@ -56,18 +45,13 @@ class MiniRedis:
             f.flush()
             os.fsync(f.fileno())  # Guarantee physical disk write
 
-    # ==========================================
-    # 1 & 2. ATOMIC SNAPSHOTTING (SAVE / AUTO-SAVE)
-    # ==========================================
     def save(self):
         """Saves current memory snapshot atomically to a temp file, then swaps it."""
-        # Capture absolute state and current log anchor point
         snapshot = {
             "aof_position": self.current_aof_position(),
             "db": self.db,
             "expiries": self.expiries
         }
-        
         temp_file = f"{self.db_file}.tmp"
         with open(temp_file, "w") as f:
             json.dump(snapshot, f)
@@ -90,74 +74,25 @@ class MiniRedis:
                 print(f"\n[!] Auto-save triggered: {self.dirty_count} writes in {elapsed:.1f}s")
                 self.save()
                 break
-
-    # ==========================================
-    # 3. STARTUP RECOVERY ENGINE
-    # ==========================================
     def startup(self):
-        """Loads the snapshot base and fast-forwards through tail AOF logs."""
-        aof_pos = 0
-        
-        # Step 1: Load base snapshot state if present
-        if os.path.exists(self.db_file):
-            with open(self.db_file, "r") as f:
-                snapshot = json.load(f)
-                self.db = snapshot["db"]
-                self.expiries = snapshot["expiries"]
-                aof_pos = snapshot["aof_position"]
-            print(f"[*] Base snapshot loaded. Resuming AOF from byte offset: {aof_pos}")
-        
-        # Step 2: Seek directly to the un-snapshotted AOF log tail
-        if os.path.exists(self.aof_file) and os.path.getsize(self.aof_file) > aof_pos:
-            with open(self.aof_file, "r") as f:
-                f.seek(aof_pos)  # Skip already-snapshotted commands
-                for line in f:
-                    if not line.strip(): 
-                        continue
-                    cmd = json.loads(line)
-                    # Replay changes into memory
-                    if cmd["op"] == "SET":
-                        self.db[cmd["key"]] = cmd["val"]
-                        if cmd["ttl"]:
-                            self.expiries[cmd["key"]] = cmd["ttl"]
-            print("[*] AOF tail replayed successfully.")
+    # ... your existing setup code (opening the file) ...
+    
+    # Example adjustment inside your file opening logic:
+        filepath = "your_snapshot_file.json" # Replace with your actual variable/path
+    
+        if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
+        # If file doesn't exist or is empty, initialize with empty data
+           self.data = {} 
         else:
-            print("[*] No pending AOF tail changes to replay.")
+             try:
+                with open(filepath, 'r') as f:
+                     self.data = json.load(f)
+             except json.JSONDecodeError:
+              # Fallback if the file gets corrupted
+                print("Warning: Snapshot file was corrupted or empty. Initializing empty database.")
+                self.data = {}
 
-    # ==========================================
-    # 4. BGREWRITEAOF LOG COMPACTION
-    # ==========================================
-    def bgrewriteaof(self):
-        """Rebuilds AOF file directly from memory state to eliminate stale historic mutations."""
-        temp_aof = f"{self.aof_file}.tmp"
-        
-        # Re-serialize what is alive in memory right now into 1 command per key
-        with open(temp_aof, "w") as f:
-            for key, val in self.db.items():
-                # Skip expired keys entirely
-                if key in self.expiries and time.time() > self.expiries[key]:
-                    continue
-                
-                ttl = None
-                if key in self.expiries:
-                    # Calculate remaining relative TTL from absolute snapshot time
-                    ttl = max(0, self.expiries[key] - time.time())
-                
-                cmd = {"op": "SET", "key": key, "val": val, "ttl": ttl}
-                f.write(json.dumps(cmd) + "\n")
-            f.flush()
-            os.fsync(f.fileno())
 
-        # Safely capture the exact snapshot configuration matching this new compacted file
-        self.save() 
-        
-        # Atomic switch: The old long file is discarded for the new concise one
-        os.replace(temp_aof, self.aof_file)
-        print("[*] AOF log compaction completed.")
-
-    # ==========================================
-    # USER INPUT COMMAND LINE INTERFACE (CLI)
-    # ==========================================
     def run_cli(self):
         """Starts an interactive CLI loop to take real-time user inputs."""
         print("\n=== MiniRedis Interactive CLI Ready ===")
@@ -168,7 +103,7 @@ class MiniRedis:
                 user_input = input("miniredis> ").strip()
                 if not user_input:
                     continue
-                
+                    
                 parts = user_input.split()
                 cmd = parts[0].upper()
                 
@@ -183,7 +118,6 @@ class MiniRedis:
                     key = parts[1]
                     val = parts[2]
                     ttl = int(parts[3]) if len(parts) > 3 else None
-                    
                     self.set(key, val, ttl)
                     print("OK")
                     
@@ -193,7 +127,6 @@ class MiniRedis:
                         continue
                     key = parts[1]
                     res = self.get(key)
-                    
                     if res is None:
                         print("(nil)")
                     else:
@@ -217,8 +150,5 @@ class MiniRedis:
                 break
 
 if __name__ == "__main__":
-    # Initialize engine (loads existing snapshot and replays outstanding AOF items automatically)
     server = MiniRedis()
-    
-    # Launch interactive input handler
     server.run_cli()

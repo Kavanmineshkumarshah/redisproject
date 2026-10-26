@@ -1,6 +1,7 @@
 from datetime import datetime
 from time import sleep
 from freezegun import freeze_time
+
 @freeze_time("2026-10-01 12:00:00")
 def test_something():
     # Inside this function, the clock is frozen

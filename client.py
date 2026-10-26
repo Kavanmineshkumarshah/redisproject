@@ -7,7 +7,7 @@ PORT = 6379
 async def redis_client():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
         await asyncio.get_event_loop().run_in_executor(None, client.connect, ("127.0.0.1", 6379))
-        print("Connected to Mini Redis")
+        print("Connected to Mini Redis")                                                                                                                                      
         print("Type commands like:")
         print("SET name Kavan")
         print("GET name")

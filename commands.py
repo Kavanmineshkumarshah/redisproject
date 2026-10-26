@@ -1,15 +1,15 @@
-from ast import arg
 import cmd
 from logging import Handler
 from turtle import st
 
 from redisproject import store
 from store import Store
+from ast import arg
 
 
 
-class CommandHandler:
-    """Handle Redis-like commands."""
+"""class CommandHandler:"""
+"""Handle Redis-like commands."""
 
 """    def __init__(self, store: Store):
         self.store = store
@@ -104,6 +104,7 @@ class CommandHandler:
         key = command[1]
 
         return self.store.ttl(key)"""
+
 def cmd_ping(store: Store, args: list[str]):
     return args[0] if args else "PONG"
 def cmd_get(store: Store, args: list[str]):

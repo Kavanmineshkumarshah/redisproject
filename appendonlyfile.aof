@@ -1,2 +1,6 @@
-{"op": "SET", "key": "nihal", "val": "12", "ttl": 60}
-{"op": "SET", "key": "kavan", "val": "12", "ttl": 15}
+{"op": "SET", "key": "key", "val": "val", "ttl": 12}
+{"op": "SET", "key": "A", "val": "10", "ttl": 12}
+{"op": "SET", "key": "A", "val": "10", "ttl": 12}
+{"op": "SET", "key": "A", "val": "10", "ttl": 13}
+{"op": "SET", "key": "A", "val": "10", "ttl": 14}
+{"op": "SET", "key": "A", "val": "10", "ttl": 9}

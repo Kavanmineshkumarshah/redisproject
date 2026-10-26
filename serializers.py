@@ -31,7 +31,6 @@ async def deserialize(reader: asyncio.StreamReader) -> str:
     """
     Deserialize a Redis-like response from the server.
     """
-
     line = await reader.readline()
     if not line:
         raise ConnectionError("Connection closed by server")

@@ -23,7 +23,7 @@ async def test_suite():
     assert parsed_val == "hello\r\nworld"
     print("Task 2: Parser handled embedded '\\r\\n' payload smoothly.")
 
-    print("⏳ Testing network splits (simulating packet lag)...")
+    print(" Testing network splits (simulating packet lag)...")
     split_reader = asyncio.StreamReader()
     parser_split = RESPParser(split_reader)
 

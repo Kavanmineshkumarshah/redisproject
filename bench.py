@@ -21,7 +21,7 @@ def run_sequential_test():
         client.sendall(cmd)
         
         # We must read and wait for the +OK\r\n response before moving to the next loop iteration
-        response = client.recv(1024) 
+        response = client.recv(1024)
         
     end_time = time.time()
     client.close()
